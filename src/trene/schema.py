@@ -53,7 +53,7 @@ def parse_distance(text: str) -> float:
 def parse_pace(text: str) -> int:
     """Parse a pace like `4:35` or `4:35/km` into seconds per km."""
     m = _PACE_RE.match(text)
-    if m:
+    if m and int(m.group(1)) * 60 + int(m.group(2)) > 0:
         return int(m.group(1)) * 60 + int(m.group(2))
     raise ValueError(f"'{text}' is not a pace")
 
@@ -217,7 +217,7 @@ WorkoutStep = Annotated[Step | Repeat, Field(discriminator="kind")]
 
 
 class Workout(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     date: dt.date = Field(description="The day the workout happens, like 2099-01-05.")
     name: str = Field(

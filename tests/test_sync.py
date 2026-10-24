@@ -299,3 +299,41 @@ def test_list_pushed(home: Path, backend: FakeBackend, plan: "Plan") -> None:
 def test_get_plan(home: Path, plan: "Plan") -> None:
     save_plan_copy(plan, home)
     assert get_plan("base-week-1", home) == plan
+
+
+def test_schedule_failure_removes_new_workout(
+    home: Path, backend: FakeBackend, plan: "Plan"
+) -> None:
+    from trene.backends import BackendError
+
+    backend.fail_on = {"schedule"}
+    with pytest.raises(BackendError):
+        push(plan, backend, home, date(2099, 1, 1))
+    assert backend.workouts == {}  # no orphan left on Garmin
+    backend.fail_on = set()
+    report = push(plan, backend, home, date(2099, 1, 1))
+    assert [a.op for a in report.actions] == ["create", "create"]
+    assert len(backend.workouts) == 2  # no duplicates
+
+
+def test_delete_plan_after_failed_push(home: Path, backend: FakeBackend, plan: "Plan") -> None:
+    from trene.backends import BackendError
+
+    push_one = plan.model_copy(deep=True)
+    push_one.workouts.append(push_one.workouts[1].model_copy(update={"name": "Extra"}))
+    real_create = backend.create
+    created: list[int] = []
+
+    def create_once(payload: dict) -> int:
+        if created:
+            raise BackendError("fake failure")
+        created.append(real_create(payload))
+        return created[0]
+
+    backend.create = create_once  # type: ignore[method-assign]
+    with pytest.raises(BackendError):
+        push(push_one, backend, home, date(2099, 1, 1))
+    assert not (home / "plans" / "base-week-1.json").exists()  # copy is saved only at the end
+    report = delete_plan("base-week-1", backend, home, date(2099, 1, 1))
+    assert [a.op for a in report.actions] == ["delete"]
+    assert backend.workouts == {}

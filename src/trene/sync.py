@@ -5,7 +5,7 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from .backends import NotFoundError, WorkoutBackend
+from .backends import BackendError, NotFoundError, WorkoutBackend
 from .compiler import compile_workout, payload_hash
 from .schema import Plan
 from .state import Entry, State, load_plan_copy, save_plan_copy
@@ -90,12 +90,21 @@ def push(
         workout_id = None
         if not dry_run:
             workout_id = backend.create(payload)
+            try:
+                schedule_id = backend.schedule(workout_id, workout.date)
+            except BackendError:
+                # Not in the state yet, so remove it now or the next push duplicates it.
+                try:
+                    backend.delete(workout_id)
+                except BackendError:
+                    pass
+                raise
             entry = Entry(
                 plan=plan.plan,
                 date=workout.date,
                 name=workout.name,
                 workout_id=workout_id,
-                schedule_id=backend.schedule(workout_id, workout.date),
+                schedule_id=schedule_id,
                 payload_hash=digest,
             )
             state.entries.append(entry)
@@ -140,11 +149,13 @@ def delete_plan(
     today: date,
     dry_run: bool = False,
 ) -> Report:
-    # The saved copy must exist; it stays after the entries go.
-    load_plan_copy(plan_id, home)
+    # A push that failed halfway leaves entries but no saved copy, so only the
+    # entries decide. The saved copy stays after the entries go.
     state = State.load(home)
-    report = Report(plan=plan_id, dry_run=dry_run)
     entries = sorted(state.for_plan(plan_id), key=lambda entry: entry.date)
+    if not entries:
+        load_plan_copy(plan_id, home)  # raises "no saved plan" for an unknown id
+    report = Report(plan=plan_id, dry_run=dry_run)
     for entry in entries:
         if entry.date < today:
             report.actions.append(

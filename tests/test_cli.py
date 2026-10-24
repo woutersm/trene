@@ -208,3 +208,15 @@ def test_push_backend_error_exits_2(tmp_path, monkeypatch) -> None:
     result = runner.invoke(app, ["push", PLAN_FILE])
     assert result.exit_code == 2
     assert "Garmin error:" in result.output
+
+
+def test_login_failure_exits_2(tmp_path, monkeypatch) -> None:
+    _home(tmp_path, monkeypatch)
+
+    def bad_login(**kwargs: object) -> str:
+        raise AuthError("Garmin login missing or expired: run `trene login`")
+
+    monkeypatch.setattr("trene.cli.login_interactive", bad_login)
+    result = runner.invoke(app, ["login"], input="a@b.c\nwrong\n123456\n")
+    assert result.exit_code == 2
+    assert "Garmin error:" in result.output

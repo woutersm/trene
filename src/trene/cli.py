@@ -28,12 +28,15 @@ def get_backend() -> WorkoutBackend:
 def login() -> None:
     """Log in to Garmin and save tokens under trene's home folder."""
     home = trene_home()
-    name = login_interactive(
-        email=typer.prompt("Garmin email"),
-        password=typer.prompt("Garmin password", hide_input=True),
-        prompt_mfa=lambda: typer.prompt("MFA code"),
-        path=home / "garmin-tokens",
-    )
+    try:
+        name = login_interactive(
+            email=typer.prompt("Garmin email"),
+            password=typer.prompt("Garmin password", hide_input=True),
+            prompt_mfa=lambda: typer.prompt("MFA code"),
+            path=home / "garmin-tokens",
+        )
+    except BackendError as e:
+        _backend_error(e)
     typer.echo(f"Logged in as {name}. Tokens saved in {home / 'garmin-tokens'}.")
 
 

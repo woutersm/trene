@@ -288,3 +288,18 @@ class TestRoundTrip:
         plan = parse_plan(original)
         dumped = plan.model_dump_json(exclude_none=True)
         assert dumped == json.dumps(original, separators=(",", ":"))
+
+
+def test_parse_pace_rejects_zero() -> None:
+    # 0:00 would make the compiler divide by zero.
+    with pytest.raises(ValueError):
+        parse_pace("0:00")
+
+
+def test_workout_name_is_trimmed_and_blank_rejected() -> None:
+    data = json.loads(Path("tests/plans/week.json").read_text())
+    data["workouts"][0]["name"] = "  Tempo  "
+    assert parse_plan(data).workouts[0].name == "Tempo"
+    data["workouts"][0]["name"] = "   "
+    with pytest.raises(PlanError):
+        parse_plan(data)
