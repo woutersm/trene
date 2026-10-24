@@ -27,3 +27,9 @@ neither `time` nor `distance` ends on `lap.button` (condition 1) with `endCondit
 design prescribed. All four fixture files from Phase 1 are the source of truth; the compiler
 emits only the documented keys, and the test's `trim` helper (copied verbatim from the
 design) bridges to the fixture files.
+
+## Phase 3: Backends
+
+- `garmin.py` centralizes all error translation in one `_translate(fn)` wrapper (garminconnect is imported only here); every `GarminBackend` method and both module functions run their client call through it, so the auth/not-found/connection mappings are written exactly once.
+- `__init__.py` re-exports `FakeBackend` and the protocol but never imports `garmin.py`, keeping `garminconnect` out of `sys.modules` for library-only use; this is pinned by a subprocess test.
+- `FakeBackend.fail_on` is a plain set (not a method) so Phase 4 can toggle failures mid-push; schedule removal on `delete` filters the `schedules` dict since Garmin drops a workout's calendar entries with the workout.
