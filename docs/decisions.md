@@ -40,3 +40,19 @@ design) bridges to the fixture files.
 - `push` rule 1 (past) deliberately applies to workouts in the file, so a changed step on a past date is reported `past`, never `update`; leftover state entries of the plan that are past are kept, not deleted.
 - `delete_plan` calls `load_plan_copy` up front (so a missing plan raises `PlanError`) even in a dry run; it does not re-save the plan copy afterwards.
 - `Action.workout_id` is `None` only for `create` in a dry run (the backend was never called); all other ops carry the id.
+
+## Phase 5: The CLI
+
+- **Auth token path** (undecided before this phase): `get_backend()` calls
+  `from_tokens(trene_home() / "garmin-tokens")`, so tokens live in trene's home folder
+  (`$TRENE_HOME` or `~/.trene`) rather than garminconnect's default `~/.garminconnect`.
+  `trene login` saves to the same path, so a login and a subsequent run always agree.
+- The CLI imports `from_tokens` and `login_interactive` into its own namespace
+  (`from trene.backends.garmin import ...`) only so tests can monkeypatch
+  `trene.cli.login_interactive`; `garminconnect` is still imported in exactly one module.
+- The `push` sync function is imported as `push_sync` because the typer command is named
+  `push`; they are distinct objects in `trene.cli`.
+- Errors map to exit codes: `PlanError` -> one line per problem, exit 1;
+  `BackendError` (incl. `AuthError`) -> `Garmin error: <message>`, exit 2. A dry-run
+  `push`/`delete` passes a `FakeBackend()` and never calls `get_backend()`, so a dry run
+  works with no Garmin login.
