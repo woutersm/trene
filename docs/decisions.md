@@ -33,3 +33,10 @@ design) bridges to the fixture files.
 - `garmin.py` centralizes all error translation in one `_translate(fn)` wrapper (garminconnect is imported only here); every `GarminBackend` method and both module functions run their client call through it, so the auth/not-found/connection mappings are written exactly once.
 - `__init__.py` re-exports `FakeBackend` and the protocol but never imports `garmin.py`, keeping `garminconnect` out of `sys.modules` for library-only use; this is pinned by a subprocess test.
 - `FakeBackend.fail_on` is a plain set (not a method) so Phase 4 can toggle failures mid-push; schedule removal on `delete` filters the `schedules` dict since Garmin drops a workout's calendar entries with the workout.
+
+## Phase 4: State and sync
+
+- `state.json` has a trailing newline and is written via `state.json.tmp` + `os.replace`; `plans/*.json` copies are exactly `plan.model_dump_json(indent=2, exclude_none=True)` with no trailing newline, per the spec.
+- `push` rule 1 (past) deliberately applies to workouts in the file, so a changed step on a past date is reported `past`, never `update`; leftover state entries of the plan that are past are kept, not deleted.
+- `delete_plan` calls `load_plan_copy` up front (so a missing plan raises `PlanError`) even in a dry run; it does not re-save the plan copy afterwards.
+- `Action.workout_id` is `None` only for `create` in a dry run (the backend was never called); all other ops carry the id.
