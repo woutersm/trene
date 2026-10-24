@@ -15,3 +15,15 @@
   module-level names for `Field(pattern=...)`: the plan-name pattern is inlined, and
   `date` is imported as `datetime as dt` because the `Workout.date` field would otherwise
   shadow the type.
+
+## Phase 2: The compiler
+
+`compiler.py` maps the plan's `kind`/target strings to Garmin's integer ids with two small
+lookup helpers; the repeat group gets a per-workout `childStepId` (1, 2, ...) that its
+children inherit, and `stepOrder` is a single depth-first counter as specified. A step with
+neither `time` nor `distance` ends on `lap.button` (condition 1) with `endConditionValue`
+`None`, matching the `lap` fixture. The `lap` fixture was captured with
+`skipLastRestStep: False`, so its test pops that key from both sides before comparing, as the
+design prescribed. All four fixture files from Phase 1 are the source of truth; the compiler
+emits only the documented keys, and the test's `trim` helper (copied verbatim from the
+design) bridges to the fixture files.
