@@ -56,3 +56,9 @@ design) bridges to the fixture files.
   `BackendError` (incl. `AuthError`) -> `Garmin error: <message>`, exit 2. A dry-run
   `push`/`delete` passes a `FakeBackend()` and never calls `get_backend()`, so a dry run
   works with no Garmin login.
+
+## Phase 6: The MCP server
+
+- The MCP tool `list_pushed` collides in name with the library function `trene.sync.list_pushed`; the library import is aliased `list_pushed_entries` (one alias per `from trene.sync import` line to satisfy ruff I001).
+- `get_plan` reuses `trene.sync.get_plan` aliased `load_saved_plan`; its `PlanError` (missing plan copy) is wrapped into `ToolError`, as is any `PlanError`/`BackendError` from `push_plan`/`delete_pushed`, so Claude sees the message rather than a generic "Error executing tool".
+- The `confirm` guard runs before any backend/state work, so `push_plan(dry_run=False)` without `confirm` never creates `state.json`.
