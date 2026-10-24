@@ -1,0 +1,26 @@
+{
+  "plan": "base-week-1",
+  "goal": "Half marathon on 2027-02-14 in 1:35",
+  "workouts": [
+    {
+      "date": "2099-01-05",
+      "name": "Tempo 3x10",
+      "notes": "Even effort.",
+      "steps": [
+        {"kind": "warmup", "time": "15min", "target": {"type": "hr_zone", "zone": 2}},
+        {"kind": "repeat", "count": 3, "steps": [
+          {"kind": "interval", "time": "10min", "target": {"type": "pace", "fast": "4:35", "slow": "4:45"}},
+          {"kind": "recovery", "time": "3min"}
+        ]},
+        {"kind": "cooldown"}
+      ]
+    },
+    {
+      "date": "2099-01-07",
+      "name": "Easy 8k",
+      "steps": [
+        {"kind": "interval", "distance": "8km", "target": {"type": "hr", "low": 130, "high": 145}}
+      ]
+    }
+  ]
+}
