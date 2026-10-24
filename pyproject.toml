@@ -1,0 +1,45 @@
+[project]
+name = "trene"
+version = "0.1.0"
+description = "Push YAML running plans to Garmin Connect as structured workouts"
+readme = "README.md"
+authors = [
+    { name = "wouters", email = "martijn@wouters.dev" }
+]
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "garminconnect==0.3.20",
+    "pydantic>=2.14.1",
+    "typer>=0.27.3",
+]
+
+[project.optional-dependencies]
+mcp = [
+    "mcp[cli]>=2.3.0",
+]
+
+[project.scripts]
+trene = "trene.cli:app"
+trene-mcp = "trene.mcp_server:main"
+
+[build-system]
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mcp[cli]>=2.3.0",
+    "pytest>=9.1.1",
+    "ruff>=0.17.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

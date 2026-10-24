@@ -1,0 +1,123 @@
+{
+  "atpPlanId": null,
+  "author": {
+    "displayName": null,
+    "fullName": null,
+    "profileImgNameLarge": null,
+    "profileImgNameMedium": null,
+    "profileImgNameSmall": null,
+    "userPro": null,
+    "userProfilePk": null,
+    "vivokidUser": null
+  },
+  "avgTrainingSpeed": 0.0,
+  "consumer": null,
+  "consumerImageURL": null,
+  "consumerName": null,
+  "consumerWebsiteURL": null,
+  "createdDate": "2026-10-24T18:08:43.0",
+  "description": "created by spike.py",
+  "descriptionI18nKey": null,
+  "estimateType": null,
+  "estimatedDistanceInMeters": null,
+  "estimatedDistanceUnit": {
+    "factor": null,
+    "unitId": null,
+    "unitKey": null
+  },
+  "estimatedDurationInSecs": 900,
+  "isSessionTransitionEnabled": null,
+  "locale": null,
+  "ownerId": 1,
+  "poolLength": null,
+  "poolLengthUnit": null,
+  "shared": false,
+  "sharedWithUsers": null,
+  "sportType": {
+    "displayOrder": 1,
+    "sportTypeId": 1,
+    "sportTypeKey": "running"
+  },
+  "subSportType": null,
+  "trainingPlanId": null,
+  "updatedDate": "2026-10-24T18:08:43.0",
+  "uploadTimestamp": null,
+  "workoutId": 1739502191,
+  "workoutName": "SPIKE push test",
+  "workoutNameI18nKey": null,
+  "workoutProvider": null,
+  "workoutSegments": [
+    {
+      "avgTrainingSpeed": null,
+      "description": null,
+      "estimateType": null,
+      "estimatedDistanceInMeters": null,
+      "estimatedDistanceUnit": null,
+      "estimatedDurationInSecs": null,
+      "poolLength": null,
+      "poolLengthUnit": null,
+      "segmentOrder": 1,
+      "sportType": {
+        "displayOrder": 1,
+        "sportTypeId": 1,
+        "sportTypeKey": "running"
+      },
+      "workoutSteps": [
+        {
+          "category": null,
+          "childStepId": null,
+          "description": null,
+          "endCondition": {
+            "conditionTypeId": 2,
+            "conditionTypeKey": "time",
+            "displayOrder": 2,
+            "displayable": true
+          },
+          "endConditionCompare": null,
+          "endConditionValue": 900.0,
+          "endConditionZone": null,
+          "equipmentType": {
+            "displayOrder": 0,
+            "equipmentTypeId": 0,
+            "equipmentTypeKey": null
+          },
+          "exerciseName": null,
+          "preferredEndConditionUnit": null,
+          "providerExerciseSourceId": null,
+          "secondaryTargetType": null,
+          "secondaryTargetValueOne": null,
+          "secondaryTargetValueTwo": null,
+          "secondaryTargetValueUnit": null,
+          "secondaryZoneNumber": null,
+          "stepId": 15021710260,
+          "stepOrder": 1,
+          "stepType": {
+            "displayOrder": 1,
+            "stepTypeId": 1,
+            "stepTypeKey": "warmup"
+          },
+          "strokeType": {
+            "displayOrder": 0,
+            "strokeTypeId": 0,
+            "strokeTypeKey": null
+          },
+          "targetType": {
+            "displayOrder": 4,
+            "workoutTargetTypeId": 4,
+            "workoutTargetTypeKey": "heart.rate.zone"
+          },
+          "targetValueOne": null,
+          "targetValueTwo": null,
+          "targetValueUnit": null,
+          "type": "ExecutableStepDTO",
+          "weightUnit": null,
+          "weightValue": null,
+          "workoutProvider": null,
+          "zoneNumber": 2
+        }
+      ]
+    }
+  ],
+  "workoutSourceId": null,
+  "workoutThumbnailUrl": "https://connect.garmin.com/chart-service/workout?data=md:s1,c2=900000.0,t4=z2;"
+}

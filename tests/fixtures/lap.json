@@ -1,0 +1,381 @@
+{
+  "atpPlanId": null,
+  "author": {
+    "displayName": null,
+    "fullName": null,
+    "profileImgNameLarge": null,
+    "profileImgNameMedium": null,
+    "profileImgNameSmall": null,
+    "userPro": null,
+    "userProfilePk": null,
+    "vivokidUser": null
+  },
+  "avgTrainingSpeed": 0.0,
+  "consumer": null,
+  "consumerImageURL": null,
+  "consumerName": null,
+  "consumerWebsiteURL": null,
+  "createdDate": "2026-10-24T18:15:28.0",
+  "description": "probe",
+  "descriptionI18nKey": null,
+  "estimateType": null,
+  "estimatedDistanceInMeters": null,
+  "estimatedDistanceUnit": {
+    "factor": null,
+    "unitId": null,
+    "unitKey": null
+  },
+  "estimatedDurationInSecs": null,
+  "isSessionTransitionEnabled": null,
+  "locale": null,
+  "ownerId": 1,
+  "poolLength": null,
+  "poolLengthUnit": null,
+  "shared": false,
+  "sharedWithUsers": null,
+  "sportType": {
+    "displayOrder": 1,
+    "sportTypeId": 1,
+    "sportTypeKey": "running"
+  },
+  "subSportType": null,
+  "trainingPlanId": null,
+  "updatedDate": "2026-10-24T18:15:28.0",
+  "uploadTimestamp": null,
+  "workoutId": 1739506125,
+  "workoutName": "SPIKE probe lap",
+  "workoutNameI18nKey": null,
+  "workoutProvider": null,
+  "workoutSegments": [
+    {
+      "avgTrainingSpeed": null,
+      "description": null,
+      "estimateType": null,
+      "estimatedDistanceInMeters": null,
+      "estimatedDistanceUnit": null,
+      "estimatedDurationInSecs": null,
+      "poolLength": null,
+      "poolLengthUnit": null,
+      "segmentOrder": 1,
+      "sportType": {
+        "displayOrder": 1,
+        "sportTypeId": 1,
+        "sportTypeKey": "running"
+      },
+      "workoutSteps": [
+        {
+          "category": null,
+          "childStepId": null,
+          "description": null,
+          "endCondition": {
+            "conditionTypeId": 1,
+            "conditionTypeKey": "lap.button",
+            "displayOrder": 1,
+            "displayable": true
+          },
+          "endConditionCompare": null,
+          "endConditionValue": null,
+          "endConditionZone": null,
+          "equipmentType": {
+            "displayOrder": 0,
+            "equipmentTypeId": 0,
+            "equipmentTypeKey": null
+          },
+          "exerciseName": null,
+          "preferredEndConditionUnit": null,
+          "providerExerciseSourceId": null,
+          "secondaryTargetType": null,
+          "secondaryTargetValueOne": null,
+          "secondaryTargetValueTwo": null,
+          "secondaryTargetValueUnit": null,
+          "secondaryZoneNumber": null,
+          "stepId": 15021755041,
+          "stepOrder": 1,
+          "stepType": {
+            "displayOrder": 3,
+            "stepTypeId": 3,
+            "stepTypeKey": "interval"
+          },
+          "strokeType": {
+            "displayOrder": 0,
+            "strokeTypeId": 0,
+            "strokeTypeKey": null
+          },
+          "targetType": {
+            "displayOrder": 1,
+            "workoutTargetTypeId": 1,
+            "workoutTargetTypeKey": "no.target"
+          },
+          "targetValueOne": null,
+          "targetValueTwo": null,
+          "targetValueUnit": null,
+          "type": "ExecutableStepDTO",
+          "weightUnit": null,
+          "weightValue": null,
+          "workoutProvider": null,
+          "zoneNumber": null
+        },
+        {
+          "childStepId": 1,
+          "endCondition": {
+            "conditionTypeId": 7,
+            "conditionTypeKey": "iterations",
+            "displayOrder": 7,
+            "displayable": false
+          },
+          "endConditionCompare": null,
+          "endConditionValue": 2.0,
+          "numberOfIterations": 2,
+          "preferredEndConditionUnit": null,
+          "skipLastRestStep": false,
+          "smartRepeat": false,
+          "stepId": 15021755042,
+          "stepOrder": 2,
+          "stepType": {
+            "displayOrder": 6,
+            "stepTypeId": 6,
+            "stepTypeKey": "repeat"
+          },
+          "type": "RepeatGroupDTO",
+          "workoutSteps": [
+            {
+              "category": null,
+              "childStepId": 1,
+              "description": null,
+              "endCondition": {
+                "conditionTypeId": 2,
+                "conditionTypeKey": "time",
+                "displayOrder": 2,
+                "displayable": true
+              },
+              "endConditionCompare": null,
+              "endConditionValue": 60.0,
+              "endConditionZone": null,
+              "equipmentType": {
+                "displayOrder": 0,
+                "equipmentTypeId": 0,
+                "equipmentTypeKey": null
+              },
+              "exerciseName": null,
+              "preferredEndConditionUnit": null,
+              "providerExerciseSourceId": null,
+              "secondaryTargetType": null,
+              "secondaryTargetValueOne": null,
+              "secondaryTargetValueTwo": null,
+              "secondaryTargetValueUnit": null,
+              "secondaryZoneNumber": null,
+              "stepId": 15021755043,
+              "stepOrder": 3,
+              "stepType": {
+                "displayOrder": 3,
+                "stepTypeId": 3,
+                "stepTypeKey": "interval"
+              },
+              "strokeType": {
+                "displayOrder": 0,
+                "strokeTypeId": 0,
+                "strokeTypeKey": null
+              },
+              "targetType": {
+                "displayOrder": 1,
+                "workoutTargetTypeId": 1,
+                "workoutTargetTypeKey": "no.target"
+              },
+              "targetValueOne": null,
+              "targetValueTwo": null,
+              "targetValueUnit": null,
+              "type": "ExecutableStepDTO",
+              "weightUnit": null,
+              "weightValue": null,
+              "workoutProvider": null,
+              "zoneNumber": null
+            },
+            {
+              "category": null,
+              "childStepId": 1,
+              "description": null,
+              "endCondition": {
+                "conditionTypeId": 1,
+                "conditionTypeKey": "lap.button",
+                "displayOrder": 1,
+                "displayable": true
+              },
+              "endConditionCompare": null,
+              "endConditionValue": null,
+              "endConditionZone": null,
+              "equipmentType": {
+                "displayOrder": 0,
+                "equipmentTypeId": 0,
+                "equipmentTypeKey": null
+              },
+              "exerciseName": null,
+              "preferredEndConditionUnit": null,
+              "providerExerciseSourceId": null,
+              "secondaryTargetType": null,
+              "secondaryTargetValueOne": null,
+              "secondaryTargetValueTwo": null,
+              "secondaryTargetValueUnit": null,
+              "secondaryZoneNumber": null,
+              "stepId": 15021755044,
+              "stepOrder": 4,
+              "stepType": {
+                "displayOrder": 4,
+                "stepTypeId": 4,
+                "stepTypeKey": "recovery"
+              },
+              "strokeType": {
+                "displayOrder": 0,
+                "strokeTypeId": 0,
+                "strokeTypeKey": null
+              },
+              "targetType": {
+                "displayOrder": 1,
+                "workoutTargetTypeId": 1,
+                "workoutTargetTypeKey": "no.target"
+              },
+              "targetValueOne": null,
+              "targetValueTwo": null,
+              "targetValueUnit": null,
+              "type": "ExecutableStepDTO",
+              "weightUnit": null,
+              "weightValue": null,
+              "workoutProvider": null,
+              "zoneNumber": null
+            }
+          ]
+        },
+        {
+          "childStepId": 2,
+          "endCondition": {
+            "conditionTypeId": 7,
+            "conditionTypeKey": "iterations",
+            "displayOrder": 7,
+            "displayable": false
+          },
+          "endConditionCompare": null,
+          "endConditionValue": 2.0,
+          "numberOfIterations": 2,
+          "preferredEndConditionUnit": null,
+          "skipLastRestStep": false,
+          "smartRepeat": false,
+          "stepId": 15021755045,
+          "stepOrder": 5,
+          "stepType": {
+            "displayOrder": 6,
+            "stepTypeId": 6,
+            "stepTypeKey": "repeat"
+          },
+          "type": "RepeatGroupDTO",
+          "workoutSteps": [
+            {
+              "category": null,
+              "childStepId": 2,
+              "description": null,
+              "endCondition": {
+                "conditionTypeId": 2,
+                "conditionTypeKey": "time",
+                "displayOrder": 2,
+                "displayable": true
+              },
+              "endConditionCompare": null,
+              "endConditionValue": 30.0,
+              "endConditionZone": null,
+              "equipmentType": {
+                "displayOrder": 0,
+                "equipmentTypeId": 0,
+                "equipmentTypeKey": null
+              },
+              "exerciseName": null,
+              "preferredEndConditionUnit": null,
+              "providerExerciseSourceId": null,
+              "secondaryTargetType": null,
+              "secondaryTargetValueOne": null,
+              "secondaryTargetValueTwo": null,
+              "secondaryTargetValueUnit": null,
+              "secondaryZoneNumber": null,
+              "stepId": 15021755046,
+              "stepOrder": 6,
+              "stepType": {
+                "displayOrder": 3,
+                "stepTypeId": 3,
+                "stepTypeKey": "interval"
+              },
+              "strokeType": {
+                "displayOrder": 0,
+                "strokeTypeId": 0,
+                "strokeTypeKey": null
+              },
+              "targetType": {
+                "displayOrder": 1,
+                "workoutTargetTypeId": 1,
+                "workoutTargetTypeKey": "no.target"
+              },
+              "targetValueOne": null,
+              "targetValueTwo": null,
+              "targetValueUnit": null,
+              "type": "ExecutableStepDTO",
+              "weightUnit": null,
+              "weightValue": null,
+              "workoutProvider": null,
+              "zoneNumber": null
+            },
+            {
+              "category": null,
+              "childStepId": 2,
+              "description": null,
+              "endCondition": {
+                "conditionTypeId": 2,
+                "conditionTypeKey": "time",
+                "displayOrder": 2,
+                "displayable": true
+              },
+              "endConditionCompare": null,
+              "endConditionValue": 30.0,
+              "endConditionZone": null,
+              "equipmentType": {
+                "displayOrder": 0,
+                "equipmentTypeId": 0,
+                "equipmentTypeKey": null
+              },
+              "exerciseName": null,
+              "preferredEndConditionUnit": null,
+              "providerExerciseSourceId": null,
+              "secondaryTargetType": null,
+              "secondaryTargetValueOne": null,
+              "secondaryTargetValueTwo": null,
+              "secondaryTargetValueUnit": null,
+              "secondaryZoneNumber": null,
+              "stepId": 15021755047,
+              "stepOrder": 7,
+              "stepType": {
+                "displayOrder": 4,
+                "stepTypeId": 4,
+                "stepTypeKey": "recovery"
+              },
+              "strokeType": {
+                "displayOrder": 0,
+                "strokeTypeId": 0,
+                "strokeTypeKey": null
+              },
+              "targetType": {
+                "displayOrder": 1,
+                "workoutTargetTypeId": 1,
+                "workoutTargetTypeKey": "no.target"
+              },
+              "targetValueOne": null,
+              "targetValueTwo": null,
+              "targetValueUnit": null,
+              "type": "ExecutableStepDTO",
+              "weightUnit": null,
+              "weightValue": null,
+              "workoutProvider": null,
+              "zoneNumber": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "workoutSourceId": null,
+  "workoutThumbnailUrl": "https://connect.garmin.com/chart-service/workout?data=md:s3,c1;2(s3,c2=60000.0;s4,c1;);2(s3,c2=30000.0;s4,c2=30000.0;);"
+}
