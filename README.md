@@ -82,9 +82,10 @@ use another folder.
 ## Use it from Claude
 
 `trene-mcp` is an MCP server over stdio with these tools: `validate_plan`, `preview_plan`,
-`push_plan`, `list_pushed`, `get_plan`, `delete_pushed`, `get_garmin_workout`, `auth_status`.
+`dry_run_plan`, `push_plan`, `list_pushed`, `get_plan`, `delete_pushed`, `get_garmin_workout`, `auth_status`.
 Pushing and deleting are dry runs unless Claude passes `confirm=true`, which it is told to do
-only after you approve the dry run.
+only after you approve the dry run. `dry_run_plan` can only preview, so a client can gate
+`push_plan` behind its own approval step without gating dry runs.
 
 Run `trene login` in a terminal first: the server cannot ask for an MFA code.
 

@@ -38,8 +38,8 @@ from trene.sync import push as push_sync
 
 INSTRUCTIONS = (
     "trene puts running workouts on the user's Garmin calendar. Build the plan as "
-    "JSON, call validate_plan, then push_plan with dry_run=true and show the user "
-    "the actions. Call push_plan with dry_run=false and confirm=true only after "
+    "JSON, call validate_plan, then dry_run_plan and show the user the actions. "
+    "Call push_plan with dry_run=false and confirm=true only after "
     "the user agrees. To change a plan, call get_plan, edit it, and push it again "
     "under the same plan id: changed workouts are updated, removed ones deleted, "
     "and workouts dated before today are never touched."
@@ -110,6 +110,11 @@ def push_plan(
         raise ToolError(str(e)) from e
 
 
+def dry_run_plan(plan: Plan) -> dict:
+    """Show what pushing a plan would create, update or delete, without contacting Garmin."""
+    return push_plan(plan, dry_run=True)
+
+
 def list_pushed(plan_id: str | None = None) -> list[dict]:
     """List the workouts trene has pushed, optionally for one plan."""
     return [
@@ -166,6 +171,7 @@ def auth_status() -> dict:
 TOOLS = [
     validate_plan,
     preview_plan,
+    dry_run_plan,
     push_plan,
     list_pushed,
     get_plan,

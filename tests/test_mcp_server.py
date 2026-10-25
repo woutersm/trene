@@ -16,6 +16,7 @@ PLAN_FILE = "tests/plans/week.json"
 TOOL_NAMES = [
     "validate_plan",
     "preview_plan",
+    "dry_run_plan",
     "push_plan",
     "list_pushed",
     "get_plan",
@@ -43,7 +44,7 @@ def _fake() -> FakeBackend:
     return FakeBackend()
 
 
-def test_lists_exactly_the_eight_tools() -> None:
+def test_lists_exactly_the_nine_tools() -> None:
     tools = asyncio.run(server.list_tools())
     assert [tool.name for tool in tools] == TOOL_NAMES
     push = next(tool for tool in tools if tool.name == "push_plan")
@@ -202,9 +203,22 @@ def test_plan_tools_describe_the_format() -> None:
     from trene.schema import parse_plan
 
     tools = {t.name: t for t in asyncio.run(build_server().list_tools())}
-    for name in ("validate_plan", "preview_plan", "push_plan"):
+    for name in ("validate_plan", "preview_plan", "dry_run_plan", "push_plan"):
         assert PLAN_FORMAT in tools[name].description
     assert PLAN_FORMAT not in tools["list_pushed"].description
     # The example in the description is itself a valid plan.
     example = PLAN_FORMAT.split("\n", 1)[1].split("\n- ", 1)[0]
     parse_plan(json.loads(example))
+
+
+def test_dry_run_plan_never_calls_backend_and_saves_nothing(tmp_path, monkeypatch) -> None:
+    home = _home(tmp_path, monkeypatch)
+
+    def boom():
+        raise AssertionError("get_backend must not be called by dry_run_plan")
+
+    monkeypatch.setattr("trene.mcp_server.get_backend", boom)
+    report = mcp_server.dry_run_plan(_plan())
+    assert report["dry_run"] is True
+    assert [a["op"] for a in report["actions"]] == ["create", "create"]
+    assert not (home / "state.json").exists()
