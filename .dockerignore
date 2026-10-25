@@ -1,0 +1,9 @@
+.venv
+.git
+.styre
+.ruff_cache
+.pytest_cache
+__pycache__
+spike
+tests
+docs

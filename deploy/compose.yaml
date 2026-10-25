@@ -1,0 +1,19 @@
+services:
+  trene:
+    image: ghcr.io/woutersm/trene:latest
+    container_name: trene
+    restart: unless-stopped
+    environment:
+      TRENE_URL: https://trene.wouters.dev
+      TRENE_PASSWORD: ${TRENE_PASSWORD:?set TRENE_PASSWORD in .env}
+    volumes:
+      - trene-data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.trene.rule=Host(`trene.wouters.dev`)
+      - traefik.http.routers.trene.entrypoints=websecure
+      - traefik.http.routers.trene.tls.certresolver=myresolver
+      - traefik.http.services.trene.loadbalancer.server.port=8000
+
+volumes:
+  trene-data:

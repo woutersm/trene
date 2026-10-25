@@ -111,6 +111,27 @@ With the Strava connector also enabled, Claude can read your recent runs and zon
 plan, show the dry run, and push it after you say yes. To change a plan later, ask Claude: it
 calls `get_plan`, edits it, and pushes again under the same plan id.
 
+## Run it on a server (Claude in the browser)
+
+Claude in the browser connects to a public HTTPS address, so trene runs on a server as a
+dockerized HTTP service. Set in your compose environment:
+
+- `TRENE_URL` — the public address, e.g. `https://trene.wouters.dev`.
+- `TRENE_PASSWORD` — the password for the login page (12+ characters).
+- `TRENE_PORT` — the port the server listens on, default `8000`.
+
+`deploy/compose.yaml` is the service block for the VPS stack (behind Traefik). Your state
+lives in the `trene-data` volume mounted at `/data`: fill it either with
+
+```sh
+docker compose run --rm -it trene trene login
+```
+
+or by copying a working `~/.trene` folder into the volume.
+
+To connect: claude.ai → Settings → Connectors → Add custom connector → URL
+`https://trene.wouters.dev/mcp`, then type the password on the page that opens.
+
 ## Develop
 
 ```sh

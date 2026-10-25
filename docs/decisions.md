@@ -93,3 +93,9 @@ design) bridges to the fixture files.
   `TRENE_URL` (must be `https://`, or `http://127.0.0.1` / `http://localhost` locally),
   `TRENE_PASSWORD` (≥ 12 chars) or a non-integer `TRENE_PORT`. Tokens persist in
   `$TRENE_HOME/auth.json` (Phase 1's OwnerAuth), so a restart accepts old access tokens.
+
+## Phase 3: Docker image and CI
+
+- The Dockerfile was taken verbatim from the phase spec (pre-built once); no content choices were needed. `.dockerignore` excludes `tests`, `docs`, `spike` so the image stays slim — the image ships the HTTP server, not the test suite.
+- The CI `publish` job only pushes on pushes to `main` (not PRs); PRs run `test` only, and `test` gates `publish` via `needs`.
+- `deploy/compose.yaml` is a *service block* intended to be merged into the VPS' existing Traefik stack file, not a standalone `docker compose` file; hence no `version` key and the image is pulled, not built.
