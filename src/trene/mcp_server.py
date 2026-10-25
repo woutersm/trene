@@ -1,13 +1,30 @@
-"""The `trene-mcp` server: an MCP server over stdio for Claude, exposing
-the same library functions as the CLI as tools."""
+"""The `trene-mcp` server: an MCP server for Claude, exposing the same library
+functions as the CLI as tools. Runs over stdio by default, or over HTTP with a
+single-owner OAuth login for claude.ai (`trene-mcp --http`)."""
 
 from __future__ import annotations
 
+import asyncio
+import os
+import sys
 from datetime import date
+from pathlib import Path
+from urllib.parse import urlencode, urlparse
 
+import uvicorn
+from mcp.server.auth.settings import (
+    AuthSettings,
+    ClientRegistrationOptions,
+    RevocationOptions,
+)
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.server.transport_security import TransportSecuritySettings
+from starlette.requests import Request
+from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from starlette.types import ASGIApp
 
+from trene.auth import OwnerAuth
 from trene.backends import BackendError, FakeBackend, WorkoutBackend
 from trene.backends.garmin import from_tokens
 from trene.compiler import compile_plan
@@ -27,8 +44,6 @@ INSTRUCTIONS = (
     "and workouts dated before today are never touched."
 )
 
-server = MCPServer("trene", instructions=INSTRUCTIONS)
-
 
 def get_backend() -> WorkoutBackend:
     return from_tokens(trene_home() / "garmin-tokens")
@@ -41,7 +56,6 @@ def _write_guarded(dry_run: bool, confirm: bool) -> None:
         )
 
 
-@server.tool()
 def validate_plan(plan: Plan) -> dict:
     """Check a plan and summarise it before doing anything else."""
     today = date.today()
@@ -57,13 +71,11 @@ def validate_plan(plan: Plan) -> dict:
     }
 
 
-@server.tool()
 def preview_plan(plan: Plan) -> list[dict]:
     """Show the Garmin payloads a plan compiles to, without pushing."""
     return compile_plan(plan)
 
 
-@server.tool()
 def push_plan(
     plan: Plan, dry_run: bool = True, confirm: bool = False
 ) -> dict:
@@ -78,7 +90,6 @@ def push_plan(
         raise ToolError(str(e)) from e
 
 
-@server.tool()
 def list_pushed(plan_id: str | None = None) -> list[dict]:
     """List the workouts trene has pushed, optionally for one plan."""
     return [
@@ -92,7 +103,6 @@ def list_pushed(plan_id: str | None = None) -> list[dict]:
     ]
 
 
-@server.tool()
 def get_plan(plan_id: str) -> dict:
     """Fetch a saved plan so it can be edited and re-pushed."""
     try:
@@ -103,7 +113,6 @@ def get_plan(plan_id: str) -> dict:
         raise ToolError(str(e)) from e
 
 
-@server.tool()
 def delete_pushed(
     plan_id: str, dry_run: bool = True, confirm: bool = False
 ) -> dict:
@@ -118,7 +127,6 @@ def delete_pushed(
         raise ToolError(str(e)) from e
 
 
-@server.tool()
 def get_garmin_workout(workout_id: int) -> dict:
     """Fetch one workout as it is stored on Garmin."""
     try:
@@ -127,7 +135,6 @@ def get_garmin_workout(workout_id: int) -> dict:
         raise ToolError(str(e)) from e
 
 
-@server.tool()
 def auth_status() -> dict:
     """Show the name of the Garmin account currently logged in."""
     try:
@@ -136,8 +143,146 @@ def auth_status() -> dict:
         return {"ok": False, "error": str(e)}
 
 
+TOOLS = [
+    validate_plan,
+    preview_plan,
+    push_plan,
+    list_pushed,
+    get_plan,
+    delete_pushed,
+    get_garmin_workout,
+    auth_status,
+]
+
+
+def build_server(
+    auth: OwnerAuth | None = None, base_url: str | None = None
+) -> MCPServer:
+    """Create the trene MCPServer, with OAuth when `auth` is given."""
+    if auth is None:
+        srv = MCPServer("trene", instructions=INSTRUCTIONS)
+    else:
+        srv = MCPServer(
+            "trene",
+            instructions=INSTRUCTIONS,
+            auth_server_provider=auth,
+            auth=AuthSettings(
+                issuer_url=base_url,
+                resource_server_url=f"{base_url}/mcp",
+                validate_token_resource=False,
+                client_registration_options=ClientRegistrationOptions(enabled=True),
+                revocation_options=RevocationOptions(enabled=True),
+            ),
+        )
+    for fn in TOOLS:
+        srv.add_tool(fn)
+    return srv
+
+
+server = build_server()
+
+
+def _login_form(request_id: str, error: str | None) -> str:
+    error_html = f'<p style="color:#c0392b">{error}</p>' if error else ""
+    return f"""<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Connect trene</title></head>
+<body style="font-family:system-ui,sans-serif;display:flex;justify-content:center;
+max-width:360px;margin:4rem auto">
+<form method="post" action="/login?{urlencode({"request": request_id})}">
+<h1>Connect trene</h1>
+<p>Claude wants to use trene on your Garmin calendar.</p>
+{error_html}
+<label>
+<input type="password" name="password" style="width:100%;padding:.5rem;
+box-sizing:border-box" autofocus>
+</label>
+<button type="submit" style="padding:.5rem 1rem;margin-top:1rem">Connect</button>
+</form>
+</body>
+</html>"""
+
+
+EXPIRED_HTML = (
+    "<!doctype html><html><head><meta charset='utf-8'>"
+    "<title>Connect trene</title></head><body style='font-family:system-ui,"
+    "sans-serif;margin:4rem auto'>"
+    "<h1>This login link has expired. Start the connection again from Claude.</h1>"
+    "</body></html>"
+)
+
+
+def create_http_app(base_url: str, password: str, home: Path) -> ASGIApp:
+    """The Starlette app for `trene-mcp --http`."""
+    base_url = base_url.rstrip("/")
+    auth = OwnerAuth(base_url, password, home / "auth.json")
+    srv = build_server(auth, base_url)
+
+    @srv.custom_route("/login", methods=["GET", "POST"])
+    async def login(request: Request) -> Response:
+        request_id = request.query_params.get("request", "")
+        if not auth.has_request(request_id):
+            return HTMLResponse(EXPIRED_HTML, status_code=400)
+        if request.method == "GET":
+            return HTMLResponse(_login_form(request_id, None), status_code=200)
+        form = await request.form()
+        password_value = str(form.get("password", ""))
+        try:
+            url = auth.approve(request_id, password_value)
+        except KeyError:
+            return HTMLResponse(EXPIRED_HTML, status_code=400)
+        if url is None:
+            await asyncio.sleep(1)
+            return HTMLResponse(
+                _login_form(request_id, "Wrong password."), status_code=401
+            )
+        return RedirectResponse(url, status_code=302)
+
+    @srv.custom_route("/health", methods=["GET"])
+    async def health(request: Request) -> Response:
+        return JSONResponse({"ok": True})
+
+    return srv.streamable_http_app(
+        host="0.0.0.0",
+        transport_security=TransportSecuritySettings(
+            allowed_hosts=[urlparse(base_url).netloc]
+        ),
+    )
+
+
 def main() -> None:
-    server.run()
+    if "--http" not in sys.argv[1:]:
+        server.run()
+        return
+    url = os.environ.get("TRENE_URL")
+    password = os.environ.get("TRENE_PASSWORD")
+    port_raw = os.environ.get("TRENE_PORT")
+    if url is None:
+        print("TRENE_URL is required (https://...)", file=sys.stderr)
+        sys.exit(2)
+    url = url.rstrip("/")
+    if not (
+        url.startswith("https://")
+        or url.startswith("http://127.0.0.1")
+        or url.startswith("http://localhost")
+    ):
+        print(
+            "TRENE_URL must start with https:// (or http://127.0.0.1 / "
+            "http://localhost for local tests)",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    if password is None or len(password) < 12:
+        print("TRENE_PASSWORD must be set and at least 12 characters", file=sys.stderr)
+        sys.exit(2)
+    try:
+        port = int(port_raw) if port_raw else 8000
+    except ValueError:
+        print(f"Invalid TRENE_PORT: {port_raw!r}", file=sys.stderr)
+        sys.exit(2)
+    uvicorn.run(
+        create_http_app(url, password, trene_home()), host="0.0.0.0", port=port
+    )
 
 
 if __name__ == "__main__":

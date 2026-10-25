@@ -75,3 +75,21 @@ design) bridges to the fixture files.
 - `authorize` URL-quotes the request id and `approve` does not persist login requests, so
   a wrong password leaves the request in place for retry while an expired one raises
   `KeyError`.
+
+## Phase 2: The HTTP server
+
+- `mcp_server.py` was restructured: the eight tools are now plain functions in a `TOOLS` list;
+  `build_server(auth=None, base_url=None)` registers them via `add_tool` and returns the server.
+  The module-level `server = build_server()` keeps stdio mode and `tests/test_mcp_server.py`
+  working unchanged.
+- The `/login` route was added with `@srv.custom_route(...)`, which mcp explicitly documents as
+  not requiring authorization — that is what lets the login page and `/health` be public while
+  `/mcp` stays behind the OAuth middleware. Wrong passwords cost an `asyncio.sleep(1)` so a
+  patched test can detect the delay without waiting.
+- `TransportSecuritySettings(allowed_hosts=[urlparse(base_url).netloc])` is the DNS-rebinding
+  guard; an `Authorization` token from a spoofed `Host: evil.example` gets a 421 from the mcp
+  transport security middleware.
+- `main()` takes `--http` and exits 2 with a one-line stderr message for missing/invalid
+  `TRENE_URL` (must be `https://`, or `http://127.0.0.1` / `http://localhost` locally),
+  `TRENE_PASSWORD` (≥ 12 chars) or a non-integer `TRENE_PORT`. Tokens persist in
+  `$TRENE_HOME/auth.json` (Phase 1's OwnerAuth), so a restart accepts old access tokens.
