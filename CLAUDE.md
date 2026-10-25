@@ -59,11 +59,24 @@ Anything that writes to Garmin needs the owner's go-ahead first. A safe check: a
 plan with id `trene-live-test` dated tomorrow, `trene push`, change a step, push again
 (expect `update`), read it back with `get_backend().get(id)`, then `trene delete trene-live-test`.
 
+## Server (Claude in the browser)
+
+- `trene-mcp --http` serves MCP at `/mcp` with a single-owner OAuth login (`src/trene/auth.py`,
+  `/login` page in `mcp_server.py`). Registration accepts only claude.ai / claude.com callbacks
+  and loopback addresses.
+- Runs at `https://trene.wouters.dev` on the owner's VPS (`root@169.58.170.60`), as service
+  `trene` in the `woutersm/wouters.dev` compose stack (local clone `~/Dev/wouters.dev/vps`), behind
+  Traefik. `TRENE_PASSWORD` is in `/root/wouters.dev/.env` on the VPS; the `trene-data` volume at
+  `/data` holds Garmin tokens, state, saved plans and `auth.json`.
+- Pushing to `main` runs CI, which publishes `ghcr.io/woutersm/trene:latest`. Deploy:
+  `ssh root@169.58.170.60 'cd /root/wouters.dev && docker compose pull trene && docker compose up -d trene'`.
+- Use trene from one place: the server and a local `~/.trene` sharing Garmin tokens can log each
+  other out.
+
 ## History
 
 - `handoff.md`: the original research and decisions (its YAML schema and unverified mapping are
   superseded by the code).
 - `docs/trene-design.md`: the styre design v1 was built from; `docs/decisions.md`: choices the
   builder made. `AGENTS.md` and `.styre/` belong to styre.
-- Next designs: automatic re-planning after a missed workout; making trene reachable from
-  Claude in the browser.
+- Next design: automatic re-planning after a missed workout.
