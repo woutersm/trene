@@ -62,8 +62,9 @@ plan with id `trene-live-test` dated tomorrow, `trene push`, change a step, push
 ## Server (Claude in the browser)
 
 - `trene-mcp --http` serves MCP at `/mcp` with a single-owner OAuth login (`src/trene/auth.py`,
-  `/login` page in `mcp_server.py`). Registration accepts only claude.ai / claude.com callbacks
-  and loopback addresses.
+  `/login` page in `mcp_server.py`). Registration accepts only claude.ai / claude.com callbacks,
+  loopback addresses, and the exact https callbacks listed in `TRENE_REDIRECT_URIS` (the owner's
+  n8n Cloud instance).
 - Runs at `https://trene.wouters.dev` on the owner's VPS (`root@169.58.170.60`), as service
   `trene` in the `woutersm/wouters.dev` compose stack (local clone `~/Dev/wouters.dev/vps`), behind
   Traefik. `TRENE_PASSWORD` is in `/root/wouters.dev/.env` on the VPS; the `trene-data` volume at

@@ -320,3 +320,24 @@ def test_expired_tokens_are_pruned_from_store(
     saved = [t["token"] for t in json.loads(store.read_text())["access"]]
     assert first.access_token not in saved
     assert len(saved) == 1
+
+
+def test_register_accepts_configured_extra_redirect(store: Path, now: list[float]) -> None:
+    from mcp.server.auth.provider import RegistrationError
+
+    n8n = "https://me.app.n8n.cloud/rest/oauth2-credential/callback"
+    auth = OwnerAuth(
+        base_url="https://trene.example",
+        password="hunter2",
+        store=store,
+        clock=lambda: now[0],
+        extra_redirects=(n8n,),
+    )
+    run(auth.register_client(OAuthClientInformationFull(client_id="n", redirect_uris=[n8n])))
+    assert run(auth.get_client("n")) is not None
+    # Only the exact address: another path on the same host is still refused.
+    other = OAuthClientInformationFull(
+        client_id="o", redirect_uris=["https://me.app.n8n.cloud/evil"]
+    )
+    with pytest.raises(RegistrationError):
+        run(auth.register_client(other))

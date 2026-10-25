@@ -214,10 +214,12 @@ EXPIRED_HTML = (
 )
 
 
-def create_http_app(base_url: str, password: str, home: Path) -> ASGIApp:
+def create_http_app(
+    base_url: str, password: str, home: Path, extra_redirects: tuple[str, ...] = ()
+) -> ASGIApp:
     """The Starlette app for `trene-mcp --http`."""
     base_url = base_url.rstrip("/")
-    auth = OwnerAuth(base_url, password, home / "auth.json")
+    auth = OwnerAuth(base_url, password, home / "auth.json", extra_redirects=extra_redirects)
     srv = build_server(auth, base_url)
 
     @srv.custom_route("/login", methods=["GET", "POST"])
@@ -282,8 +284,15 @@ def main() -> None:
     except ValueError:
         print(f"Invalid TRENE_PORT: {port_raw!r}", file=sys.stderr)
         sys.exit(2)
+    # More OAuth callbacks the login may send codes to, e.g. an n8n instance's.
+    raw = os.environ.get("TRENE_REDIRECT_URIS", "")
+    extra = tuple(u.strip() for u in raw.split(",") if u.strip())
+    bad = [u for u in extra if not u.startswith("https://")]
+    if bad:
+        print(f"TRENE_REDIRECT_URIS entries must start with https://: {bad[0]}", file=sys.stderr)
+        sys.exit(2)
     uvicorn.run(
-        create_http_app(url, password, trene_home()), host="0.0.0.0", port=port
+        create_http_app(url, password, trene_home(), extra), host="0.0.0.0", port=port
     )
 
 

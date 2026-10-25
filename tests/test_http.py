@@ -282,7 +282,7 @@ def test_main_http_invalid_env(
     env: dict[str, str],
     expected_error: str,
 ) -> None:
-    for name in ("TRENE_URL", "TRENE_PASSWORD", "TRENE_PORT"):
+    for name in ("TRENE_URL", "TRENE_PASSWORD", "TRENE_PORT", "TRENE_REDIRECT_URIS"):
         monkeypatch.delenv(name, raising=False)
     for name, value in env.items():
         monkeypatch.setenv(name, value)
@@ -292,6 +292,33 @@ def test_main_http_invalid_env(
         main()
     assert e.value.code == 2
     assert expected_error in capsys.readouterr().err
+
+
+def test_main_http_reads_extra_redirects(http_env: pytest.MonkeyPatch) -> None:
+    n8n = "https://me.app.n8n.cloud/rest/oauth2-credential/callback"
+    http_env.setenv("TRENE_REDIRECT_URIS", f" {n8n} , ")
+    seen: list[tuple] = []
+    real = mcp_server.create_http_app
+    http_env.setattr(
+        mcp_server,
+        "create_http_app",
+        lambda *a: seen.append(a) or real(*a),
+    )
+    http_env.setattr(mcp_server.uvicorn, "run", lambda app, **kw: None)
+    http_env.setattr(sys, "argv", ["trene-mcp", "--http"])
+    main()
+    assert seen[0][3] == (n8n,)
+
+
+def test_main_http_rejects_plain_http_extra_redirect(
+    http_env: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    http_env.setenv("TRENE_REDIRECT_URIS", "http://me.example/cb")
+    http_env.setattr(sys, "argv", ["trene-mcp", "--http"])
+    with pytest.raises(SystemExit) as e:
+        main()
+    assert e.value.code == 2
+    assert "TRENE_REDIRECT_URIS" in capsys.readouterr().err
 
 
 def test_register_with_foreign_redirect_is_refused(tmp_path: Path) -> None:

@@ -40,10 +40,11 @@ CLAUDE_CALLBACKS = (
 )
 
 
-def allowed_redirect(uri: str) -> bool:
+def allowed_redirect(uri: str, extra: tuple[str, ...] = ()) -> bool:
+    """`extra` holds more exact callbacks the owner trusts, such as their n8n instance's."""
     parsed = urlparse(uri)
     loopback = parsed.scheme == "http" and parsed.hostname in ("localhost", "127.0.0.1")
-    return uri in CLAUDE_CALLBACKS or loopback
+    return uri in CLAUDE_CALLBACKS or uri in extra or loopback
 
 
 @dataclass
@@ -60,7 +61,9 @@ class OwnerAuth:
         password: str,
         store: Path,
         clock: Callable[[], float] = time.time,
+        extra_redirects: tuple[str, ...] = (),
     ) -> None:
+        self._extra_redirects = extra_redirects
         self._base_url = base_url.rstrip("/")
         self._password = password
         self._store = store
@@ -78,7 +81,11 @@ class OwnerAuth:
         return self._clients.get(client_id)
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
-        bad = [str(u) for u in client_info.redirect_uris or [] if not allowed_redirect(str(u))]
+        bad = [
+            str(u)
+            for u in client_info.redirect_uris or []
+            if not allowed_redirect(str(u), self._extra_redirects)
+        ]
         if bad:
             raise RegistrationError(
                 error="invalid_redirect_uri",

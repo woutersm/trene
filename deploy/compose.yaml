@@ -6,6 +6,7 @@ services:
     environment:
       TRENE_URL: https://trene.wouters.dev
       TRENE_PASSWORD: ${TRENE_PASSWORD:?set TRENE_PASSWORD in .env}
+      TRENE_REDIRECT_URIS: ${TRENE_REDIRECT_URIS:-}
     volumes:
       - trene-data:/data
     labels:
