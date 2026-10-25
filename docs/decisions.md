@@ -62,3 +62,16 @@ design) bridges to the fixture files.
 - The MCP tool `list_pushed` collides in name with the library function `trene.sync.list_pushed`; the library import is aliased `list_pushed_entries` (one alias per `from trene.sync import` line to satisfy ruff I001).
 - `get_plan` reuses `trene.sync.get_plan` aliased `load_saved_plan`; its `PlanError` (missing plan copy) is wrapped into `ToolError`, as is any `PlanError`/`BackendError` from `push_plan`/`delete_pushed`, so Claude sees the message rather than a generic "Error executing tool".
 - The `confirm` guard runs before any backend/state work, so `push_plan(dry_run=False)` without `confirm` never creates `state.json`.
+## Phase 1: The owner login provider
+
+- `OwnerAuth` keeps pending login requests and authorization codes in memory only (they
+  expire in minutes); clients, access tokens and refresh tokens persist in the JSON store
+  via atomic `os.replace`, so claude.ai stays connected across container restarts.
+- `exchange_authorization_code` takes the library's `AuthorizationCode` model (as the mcp
+  protocol dictates); the caller must `load_authorization_code` first, which also re-checks
+  expiry and client binding.
+- `revoke_token` pops the token from both the access and refresh tables (one of them has
+  it); unknown tokens are ignored and revocation persists.
+- `authorize` URL-quotes the request id and `approve` does not persist login requests, so
+  a wrong password leaves the request in place for retry while an expired one raises
+  `KeyError`.
