@@ -45,6 +45,25 @@ INSTRUCTIONS = (
     "and workouts dated before today are never touched."
 )
 
+# Some MCP clients (n8n) pass the model only the top level of a tool's schema, so the
+# plan format also goes into the description of every tool that takes a plan.
+PLAN_FORMAT = """Plan format (JSON):
+{"plan": "base-week-1", "goal": "optional text", "workouts": [
+  {"date": "2026-11-03", "name": "Tempo 3x10", "notes": "optional", "steps": [
+    {"kind": "warmup", "time": "15min", "target": {"type": "hr_zone", "zone": 2}},
+    {"kind": "repeat", "count": 3, "steps": [
+      {"kind": "interval", "time": "10min",
+       "target": {"type": "pace", "fast": "4:35", "slow": "4:45"}},
+      {"kind": "recovery", "time": "3min"}]},
+    {"kind": "cooldown"}]}]}
+- kind: warmup, interval, recovery, rest, cooldown, or repeat (count 2-99, plain steps, no nesting).
+- time: "90s", "10min", "1h30min" ("15m" is 15 meters). distance: "400m", "1.5km".
+  Neither: the step ends on the lap button.
+- target (optional): {"type": "pace", "fast": "4:35", "slow": "4:45"} per km,
+  {"type": "hr_zone", "zone": 2}, {"type": "hr", "low": 130, "high": 145},
+  {"type": "cadence", "low": 170, "high": 180}.
+- No other fields."""
+
 
 def get_backend() -> WorkoutBackend:
     return from_tokens(trene_home() / "garmin-tokens")
@@ -186,6 +205,8 @@ def _tools() -> list[Tool]:
     for fn in TOOLS:
         tool = Tool.from_function(fn)
         tool.parameters = inline_refs(tool.parameters)
+        if "plan" in tool.parameters.get("properties", {}):
+            tool.description = f"{tool.description}\n\n{PLAN_FORMAT}"
         tools.append(tool)
     return tools
 

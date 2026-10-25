@@ -192,3 +192,19 @@ def test_tool_schemas_have_no_refs() -> None:
     assert "workouts" in plan["properties"]
     step_kinds = json.dumps(plan["properties"]["workouts"])
     assert "repeat" in step_kinds and "pace" in step_kinds
+
+
+def test_plan_tools_describe_the_format() -> None:
+    import asyncio
+    import json
+
+    from trene.mcp_server import PLAN_FORMAT, build_server
+    from trene.schema import parse_plan
+
+    tools = {t.name: t for t in asyncio.run(build_server().list_tools())}
+    for name in ("validate_plan", "preview_plan", "push_plan"):
+        assert PLAN_FORMAT in tools[name].description
+    assert PLAN_FORMAT not in tools["list_pushed"].description
+    # The example in the description is itself a valid plan.
+    example = PLAN_FORMAT.split("\n", 1)[1].split("\n- ", 1)[0]
+    parse_plan(json.loads(example))
