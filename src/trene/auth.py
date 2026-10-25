@@ -47,6 +47,17 @@ def allowed_redirect(uri: str, extra: tuple[str, ...] = ()) -> bool:
     return uri in CLAUDE_CALLBACKS or uri in extra or loopback
 
 
+class AnyScopeClient(OAuthClientInformationFull):
+    """A client that may ask for any scope.
+
+    trene has one owner and no scopes: the password grants everything. Clients still
+    ask for scopes (n8n asks for "openid" without registering it), so accept them.
+    """
+
+    def validate_scope(self, requested_scope: str | None) -> list[str] | None:
+        return None if requested_scope is None else requested_scope.split()
+
+
 @dataclass
 class LoginRequest:
     client_id: str
@@ -78,7 +89,10 @@ class OwnerAuth:
     # -- provider protocol (all async) -------------------------------------
 
     async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
-        return self._clients.get(client_id)
+        client = self._clients.get(client_id)
+        if client is None:
+            return None
+        return AnyScopeClient.model_validate(client.model_dump())
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
         bad = [

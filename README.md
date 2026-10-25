@@ -120,8 +120,9 @@ dockerized HTTP service. Set in your compose environment:
 - `TRENE_PASSWORD` — the password for the login page (12+ characters).
 - `TRENE_PORT` — the port the server listens on, default `8000`.
 - `TRENE_REDIRECT_URIS` — optional, comma separated: more OAuth callback addresses the login
-  accepts besides claude.ai and loopback, e.g. an n8n instance's
-  `https://<you>.app.n8n.cloud/rest/oauth2-credential/callback`.
+  accepts besides claude.ai and loopback. For n8n Cloud that is
+  `https://oauth.n8n.cloud/oauth2/callback` (shared by all n8n Cloud accounts, like claude.ai's;
+  the password is still required).
 
 `deploy/compose.yaml` is the service block for the VPS stack (behind Traefik). Your state
 lives in the `trene-data` volume mounted at `/data`: fill it either with

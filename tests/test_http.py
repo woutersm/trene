@@ -54,21 +54,21 @@ def _verifier_and_challenge() -> tuple[str, str]:
 
 
 def _login_and_get_token(
-    c: TestClient, reg: dict, password: str = PASSWORD
+    c: TestClient, reg: dict, password: str = PASSWORD, scope: str | None = None
 ) -> tuple[str, str]:
     """Run the owner login and the code exchange; returns (code, access_token)."""
     verifier, challenge = _verifier_and_challenge()
-    a = c.get(
-        "/authorize",
-        params={
-            "response_type": "code",
-            "client_id": reg["client_id"],
-            "redirect_uri": CALLBACK,
-            "state": "s",
-            "code_challenge": challenge,
-            "code_challenge_method": "S256",
-        },
-    )
+    params = {
+        "response_type": "code",
+        "client_id": reg["client_id"],
+        "redirect_uri": CALLBACK,
+        "state": "s",
+        "code_challenge": challenge,
+        "code_challenge_method": "S256",
+    }
+    if scope is not None:
+        params["scope"] = scope
+    a = c.get("/authorize", params=params)
     login = urlparse(a.headers["location"])
     assert login.scheme == "https"
     assert login.netloc == "trene.example"
@@ -149,6 +149,13 @@ def test_full_flow(tmp_path: Path) -> None:
         assert r.status_code == 200
         for name in TOOL_NAMES:
             assert name in r.text
+
+
+def test_flow_with_unregistered_scope(tmp_path: Path) -> None:
+    # n8n registers without a scope, then asks for "openid".
+    with _client(tmp_path) as c:
+        _, token = _login_and_get_token(c, _register(c), scope="openid")
+        assert token
 
 
 def test_wrong_password(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

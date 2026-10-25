@@ -341,3 +341,12 @@ def test_register_accepts_configured_extra_redirect(store: Path, now: list[float
     )
     with pytest.raises(RegistrationError):
         run(auth.register_client(other))
+
+
+def test_client_may_ask_for_scopes_it_did_not_register(auth: OwnerAuth) -> None:
+    # n8n registers without a scope, then asks for "openid" at authorize.
+    run(auth.register_client(client()))
+    loaded = run(auth.get_client("c1"))
+    assert loaded is not None
+    assert loaded.validate_scope("openid") == ["openid"]
+    assert loaded.validate_scope(None) is None
