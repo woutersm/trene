@@ -174,3 +174,21 @@ def test_push_backend_error_becomes_tool_error(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("trene.mcp_server.get_backend", lambda: fake)
     with pytest.raises(ToolError, match="fake failure"):
         mcp_server.push_plan(_plan(), dry_run=False, confirm=True)
+
+
+def test_tool_schemas_have_no_refs() -> None:
+    # n8n drops $defs; every schema must stand on its own.
+    import asyncio
+    import json
+
+    from trene.mcp_server import build_server
+
+    tools = asyncio.run(build_server().list_tools())
+    for t in tools:
+        text = json.dumps(t.input_schema)
+        assert "$ref" not in text and "$defs" not in text, t.name
+    validate = next(t for t in tools if t.name == "validate_plan")
+    plan = validate.input_schema["properties"]["plan"]
+    assert "workouts" in plan["properties"]
+    step_kinds = json.dumps(plan["properties"]["workouts"])
+    assert "repeat" in step_kinds and "pace" in step_kinds

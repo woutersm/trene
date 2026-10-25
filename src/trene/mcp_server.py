@@ -19,6 +19,7 @@ from mcp.server.auth.settings import (
 )
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+from mcp.server.mcpserver.tools import Tool
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -155,16 +156,51 @@ TOOLS = [
 ]
 
 
+def inline_refs(schema: dict) -> dict:
+    """Replace every `$ref` with its definition and drop `$defs`.
+
+    Some MCP clients (n8n) drop `$defs`, so the model saw `plan` as a bare object and
+    guessed its fields. Pydantic's `discriminator` mapping points into `$defs` too; it is
+    an OpenAPI hint, and the `const` on each variant's tag already says the same.
+    """
+    defs = schema.get("$defs", {})
+
+    def resolve(node: object) -> object:
+        if isinstance(node, dict):
+            if "$ref" in node:
+                target = resolve(defs[node["$ref"].rsplit("/", 1)[-1]])
+                rest = {k: resolve(v) for k, v in node.items() if k != "$ref"}
+                return {**target, **rest}
+            return {
+                k: resolve(v) for k, v in node.items() if k not in ("$defs", "discriminator")
+            }
+        if isinstance(node, list):
+            return [resolve(v) for v in node]
+        return node
+
+    return resolve(schema)
+
+
+def _tools() -> list[Tool]:
+    tools = []
+    for fn in TOOLS:
+        tool = Tool.from_function(fn)
+        tool.parameters = inline_refs(tool.parameters)
+        tools.append(tool)
+    return tools
+
+
 def build_server(
     auth: OwnerAuth | None = None, base_url: str | None = None
 ) -> MCPServer:
     """Create the trene MCPServer, with OAuth when `auth` is given."""
     if auth is None:
-        srv = MCPServer("trene", instructions=INSTRUCTIONS)
+        srv = MCPServer("trene", instructions=INSTRUCTIONS, tools=_tools())
     else:
         srv = MCPServer(
             "trene",
             instructions=INSTRUCTIONS,
+            tools=_tools(),
             auth_server_provider=auth,
             auth=AuthSettings(
                 issuer_url=base_url,
@@ -174,8 +210,6 @@ def build_server(
                 revocation_options=RevocationOptions(enabled=True),
             ),
         )
-    for fn in TOOLS:
-        srv.add_tool(fn)
     return srv
 
 
