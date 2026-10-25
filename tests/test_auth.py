@@ -295,3 +295,28 @@ def test_load_drops_expired_tokens(tmp_path: Path) -> None:
     assert run(a.load_access_token("fresh-access")) is not None
     assert run(a.load_refresh_token(client(), "old-refresh")) is None
     assert run(a.load_refresh_token(client(), "fresh-refresh")) is not None
+
+
+def test_register_rejects_foreign_redirect(auth: OwnerAuth) -> None:
+    from mcp.server.auth.provider import RegistrationError
+
+    evil = OAuthClientInformationFull(client_id="x", redirect_uris=["https://evil.example/cb"])
+    with pytest.raises(RegistrationError):
+        run(auth.register_client(evil))
+    assert run(auth.get_client("x")) is None
+    local = OAuthClientInformationFull(
+        client_id="cc", redirect_uris=["http://localhost:33418/callback"]
+    )
+    run(auth.register_client(local))
+    assert run(auth.get_client("cc")) is not None
+
+
+def test_expired_tokens_are_pruned_from_store(
+    auth: OwnerAuth, store: Path, now: list[float]
+) -> None:
+    first = exchange(auth, client(), redirect_from(auth))
+    now[0] += ACCESS_TTL + 1
+    exchange(auth, client(), redirect_from(auth))  # saving again prunes the expired token
+    saved = [t["token"] for t in json.loads(store.read_text())["access"]]
+    assert first.access_token not in saved
+    assert len(saved) == 1

@@ -14,13 +14,14 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from mcp.server.auth.provider import (
     AccessToken,
     AuthorizationCode,
     AuthorizationParams,
     RefreshToken,
+    RegistrationError,
     construct_redirect_uri,
 )
 from mcp.shared.auth import OAuthClientInformationFull, OAuthToken
@@ -29,6 +30,20 @@ ACCESS_TTL = 3600  # seconds
 REFRESH_TTL = 90 * 24 * 3600
 CODE_TTL = 300
 REQUEST_TTL = 600
+
+# Where a login may send its code: claude.ai's callbacks, or the person's own machine
+# (Claude Code and Claude Desktop use a loopback callback). Anything else would let a
+# stranger register their own site and collect a code from a real login link.
+CLAUDE_CALLBACKS = (
+    "https://claude.ai/api/mcp/auth_callback",
+    "https://claude.com/api/mcp/auth_callback",
+)
+
+
+def allowed_redirect(uri: str) -> bool:
+    parsed = urlparse(uri)
+    loopback = parsed.scheme == "http" and parsed.hostname in ("localhost", "127.0.0.1")
+    return uri in CLAUDE_CALLBACKS or loopback
 
 
 @dataclass
@@ -63,12 +78,21 @@ class OwnerAuth:
         return self._clients.get(client_id)
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
+        bad = [str(u) for u in client_info.redirect_uris or [] if not allowed_redirect(str(u))]
+        if bad:
+            raise RegistrationError(
+                error="invalid_redirect_uri",
+                error_description=f"redirect URI not allowed: {bad[0]}",
+            )
         self._clients[client_info.client_id] = client_info
         self._save()
 
     async def authorize(
         self, client: OAuthClientInformationFull, params: AuthorizationParams
     ) -> str:
+        now = self._clock()
+        self._requests = {k: r for k, r in self._requests.items() if r.expires_at >= now}
+        self._codes = {k: c for k, c in self._codes.items() if c.expires_at >= now}
         request_id = secrets.token_urlsafe(16)
         self._requests[request_id] = LoginRequest(
             client_id=client.client_id, params=params, expires_at=self._clock() + REQUEST_TTL
@@ -183,6 +207,13 @@ class OwnerAuth:
         )
 
     def _save(self) -> None:
+        now = self._clock()
+        self._access = {
+            k: t for k, t in self._access.items() if t.expires_at is None or t.expires_at >= now
+        }
+        self._refresh = {
+            k: t for k, t in self._refresh.items() if t.expires_at is None or t.expires_at >= now
+        }
         self._store.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "version": 1,

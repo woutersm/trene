@@ -292,3 +292,32 @@ def test_main_http_invalid_env(
         main()
     assert e.value.code == 2
     assert expected_error in capsys.readouterr().err
+
+
+def test_register_with_foreign_redirect_is_refused(tmp_path: Path) -> None:
+    with _client(tmp_path) as c:
+        r = c.post(
+            "/register",
+            json={
+                "redirect_uris": ["https://evil.example/cb"],
+                "token_endpoint_auth_method": "none",
+            },
+        )
+        assert r.status_code == 400
+        assert r.json()["error"] == "invalid_redirect_uri"
+
+
+def test_login_page_fits_a_phone(tmp_path: Path) -> None:
+    with _client(tmp_path) as c:
+        reg = _register(c)
+        _, challenge = _verifier_and_challenge()
+        a = c.get(
+            "/authorize",
+            params={"response_type": "code", "client_id": reg["client_id"],
+                    "redirect_uri": CALLBACK, "state": "s",
+                    "code_challenge": challenge, "code_challenge_method": "S256"},
+        )
+        login = urlparse(a.headers["location"])
+        page = c.get(f"{login.path}?{login.query}")
+        assert page.status_code == 200
+        assert 'name="viewport"' in page.text

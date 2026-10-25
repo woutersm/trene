@@ -186,9 +186,10 @@ def _login_form(request_id: str, error: str | None) -> str:
     error_html = f'<p style="color:#c0392b">{error}</p>' if error else ""
     return f"""<!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Connect trene</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect trene</title></head>
 <body style="font-family:system-ui,sans-serif;display:flex;justify-content:center;
-max-width:360px;margin:4rem auto">
+max-width:360px;margin:4rem auto;padding:0 16px">
 <form method="post" action="/login?{urlencode({"request": request_id})}">
 <h1>Connect trene</h1>
 <p>Claude wants to use trene on your Garmin calendar.</p>
@@ -205,6 +206,7 @@ box-sizing:border-box" autofocus>
 
 EXPIRED_HTML = (
     "<!doctype html><html><head><meta charset='utf-8'>"
+    "<meta name='viewport' content='width=device-width, initial-scale=1'>"
     "<title>Connect trene</title></head><body style='font-family:system-ui,"
     "sans-serif;margin:4rem auto'>"
     "<h1>This login link has expired. Start the connection again from Claude.</h1>"
