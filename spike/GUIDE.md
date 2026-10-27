@@ -1,7 +1,7 @@
 # Garmin spike: about 45 minutes
 
 Goal: find out whether the script can create Garmin workouts, and save real workout JSON
-for the compiler to copy. Run every command from `/Users/mw/Dev/fit`.
+for the compiler to copy. Run every command from `/Users/mw/Dev/trene`.
 
 ## 1. Log in (5 min)
 
