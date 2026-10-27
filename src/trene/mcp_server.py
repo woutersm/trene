@@ -5,6 +5,7 @@ single-owner OAuth login for claude.ai (`trene-mcp --http`)."""
 from __future__ import annotations
 
 import asyncio
+import hmac
 import os
 import sys
 from datetime import date
@@ -29,6 +30,7 @@ from trene.auth import OwnerAuth
 from trene.backends import BackendError, FakeBackend, WorkoutBackend
 from trene.backends.garmin import from_tokens
 from trene.compiler import compile_plan
+from trene.planned import planned
 from trene.schema import Plan, PlanError
 from trene.state import trene_home
 from trene.sync import delete_plan
@@ -276,9 +278,14 @@ EXPIRED_HTML = (
 
 
 def create_http_app(
-    base_url: str, password: str, home: Path, extra_redirects: tuple[str, ...] = ()
+    base_url: str,
+    password: str,
+    home: Path,
+    extra_redirects: tuple[str, ...] = (),
+    api_token: str | None = None,
 ) -> ASGIApp:
-    """The Starlette app for `trene-mcp --http`."""
+    """The Starlette app for `trene-mcp --http`. With `api_token`, `/api/planned` serves
+    the pushed workouts to a reader holding that token (heim)."""
     base_url = base_url.rstrip("/")
     auth = OwnerAuth(base_url, password, home / "auth.json", extra_redirects=extra_redirects)
     srv = build_server(auth, base_url)
@@ -306,6 +313,16 @@ def create_http_app(
     @srv.custom_route("/health", methods=["GET"])
     async def health(request: Request) -> Response:
         return JSONResponse({"ok": True})
+
+    if api_token:
+        expected = f"Bearer {api_token}".encode()
+
+        @srv.custom_route("/api/planned", methods=["GET"])
+        async def api_planned(request: Request) -> Response:
+            given = request.headers.get("authorization", "").encode()
+            if not hmac.compare_digest(given, expected):
+                return JSONResponse({"error": "unauthorized"}, status_code=401)
+            return JSONResponse(planned(home))
 
     return srv.streamable_http_app(
         host="0.0.0.0",
@@ -352,8 +369,15 @@ def main() -> None:
     if bad:
         print(f"TRENE_REDIRECT_URIS entries must start with https://: {bad[0]}", file=sys.stderr)
         sys.exit(2)
+    # The read-only token for /api/planned (heim); unset, the route does not exist.
+    api_token = os.environ.get("TRENE_API_TOKEN") or None
+    if api_token is not None and len(api_token) < 24:
+        print("TRENE_API_TOKEN must be at least 24 characters", file=sys.stderr)
+        sys.exit(2)
     uvicorn.run(
-        create_http_app(url, password, trene_home(), extra), host="0.0.0.0", port=port
+        create_http_app(url, password, trene_home(), extra, api_token),
+        host="0.0.0.0",
+        port=port,
     )
 
 

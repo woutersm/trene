@@ -22,6 +22,7 @@ uv run trene <command>        # the CLI against the real account (see "Live chec
 | `src/trene/sync.py` | push, delete, list, get_plan: makes the Garmin calendar match a plan |
 | `src/trene/cli.py` | typer app; thin wrappers |
 | `src/trene/mcp_server.py` | `MCPServer` (mcp 2.x) tools; thin wrappers |
+| `src/trene/planned.py` | pushed workouts as plain JSON for `/api/planned` (heim) |
 
 ## Rules
 
@@ -66,6 +67,9 @@ plan with id `trene-live-test` dated tomorrow, `trene push`, change a step, push
   loopback addresses, and the exact https callbacks listed in `TRENE_REDIRECT_URIS` (n8n Cloud's
   shared `https://oauth.n8n.cloud/oauth2/callback`). Scopes mean nothing: any requested scope is
   accepted (`AnyScopeClient`), because n8n asks for `openid` without registering it.
+- `GET /api/planned` (`src/trene/planned.py`), only when `TRENE_API_TOKEN` is set: every pushed
+  workout as JSON, read from state and the saved plans, never from Garmin. heim (`~/Dev/heim`,
+  `docs/trene-design.md` there) reads it with the token as a bearer.
 - Runs at `https://trene.wouters.dev` on the owner's VPS (`root@169.58.170.60`), as service
   `trene` in the `woutersm/wouters.dev` compose stack (local clone `~/Dev/wouters.dev/vps`), behind
   Traefik. `TRENE_PASSWORD` is in `/root/wouters.dev/.env` on the VPS; the `trene-data` volume at

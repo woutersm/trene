@@ -124,6 +124,10 @@ dockerized HTTP service. Set in your compose environment:
   accepts besides claude.ai and loopback. For n8n Cloud that is
   `https://oauth.n8n.cloud/oauth2/callback` (shared by all n8n Cloud accounts, like claude.ai's;
   the password is still required).
+- `TRENE_API_TOKEN` — optional, 24+ characters: turns on `GET /api/planned`, the pushed
+  workouts as JSON (steps in seconds, meters and seconds per km, with an estimated time and
+  distance per workout) for a reader that sends `Authorization: Bearer <token>`. heim's
+  `/fit` uses it. Unset, the address does not exist.
 
 `deploy/compose.yaml` is the service block for the VPS stack (behind Traefik). Your state
 lives in the `trene-data` volume mounted at `/data`: fill it either with

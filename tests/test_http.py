@@ -289,7 +289,8 @@ def test_main_http_invalid_env(
     env: dict[str, str],
     expected_error: str,
 ) -> None:
-    for name in ("TRENE_URL", "TRENE_PASSWORD", "TRENE_PORT", "TRENE_REDIRECT_URIS"):
+    names = ("TRENE_URL", "TRENE_PASSWORD", "TRENE_PORT", "TRENE_REDIRECT_URIS", "TRENE_API_TOKEN")
+    for name in names:
         monkeypatch.delenv(name, raising=False)
     for name, value in env.items():
         monkeypatch.setenv(name, value)
@@ -355,3 +356,25 @@ def test_login_page_fits_a_phone(tmp_path: Path) -> None:
         page = c.get(f"{login.path}?{login.query}")
         assert page.status_code == 200
         assert 'name="viewport"' in page.text
+
+
+def test_main_http_passes_the_api_token(http_env: pytest.MonkeyPatch) -> None:
+    http_env.setenv("TRENE_API_TOKEN", "x" * 24)
+    seen: list[tuple] = []
+    real = mcp_server.create_http_app
+    http_env.setattr(mcp_server, "create_http_app", lambda *a: seen.append(a) or real(*a))
+    http_env.setattr(mcp_server.uvicorn, "run", lambda app, **kw: None)
+    http_env.setattr(sys, "argv", ["trene-mcp", "--http"])
+    main()
+    assert seen[0][4] == "x" * 24
+
+
+def test_main_http_rejects_a_short_api_token(
+    http_env: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    http_env.setenv("TRENE_API_TOKEN", "short")
+    http_env.setattr(sys, "argv", ["trene-mcp", "--http"])
+    with pytest.raises(SystemExit) as e:
+        main()
+    assert e.value.code == 2
+    assert "TRENE_API_TOKEN" in capsys.readouterr().err
